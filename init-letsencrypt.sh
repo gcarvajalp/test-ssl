@@ -5,7 +5,7 @@ if ! [ -x "$(command -v docker-compose)" ]; then
   exit 1
 fi
 
-domains=(example.org www.example.org)
+domains=(webcrapp.ddns.net)
 rsa_key_size=4096
 data_path="./data/certbot"
 email="" # Adding a valid address is strongly recommended
@@ -34,19 +34,19 @@ docker-compose run --rm --entrypoint "\
   openssl req -x509 -nodes -newkey rsa:1024 -days 1\
     -keyout '$path/privkey.pem' \
     -out '$path/fullchain.pem' \
-    -subj '/CN=localhost'" certbottest
+    -subj '/CN=localhost'" certbot
 echo
 
 
 echo "### Starting nginx ..."
-docker-compose up --force-recreate -d nginxtest
+docker-compose up --force-recreate -d nginx
 echo
 
 echo "### Deleting dummy certificate for $domains ..."
 docker-compose run --rm --entrypoint "\
   rm -Rf /etc/letsencrypt/live/$domains && \
   rm -Rf /etc/letsencrypt/archive/$domains && \
-  rm -Rf /etc/letsencrypt/renewal/$domains.conf" certbottest
+  rm -Rf /etc/letsencrypt/renewal/$domains.conf" certbot
 echo
 
 
@@ -67,14 +67,14 @@ esac
 if [ $staging != "0" ]; then staging_arg="--staging"; fi
 
 docker-compose run --rm --entrypoint "\
-  certbottest certonly --webroot -w /var/www/certbot \
+  certbot certonly --webroot -w /var/www/certbot \
     $staging_arg \
     $email_arg \
     $domain_args \
     --rsa-key-size $rsa_key_size \
     --agree-tos \
-    --force-renewal" certbottest
+    --force-renewal" certbot
 echo
 
 echo "### Reloading nginx ..."
-docker-compose exec nginxtest nginxtest -s reload
+docker-compose exec nginx nginx -s reload
